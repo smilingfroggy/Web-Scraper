@@ -74,7 +74,57 @@ async function getArtPrice() {
   await driver.sleep(10000)
 
 
+  // get number of results
+  const counts_text= await driver.wait(until.elementLocated(By.className('searchbar-count'))).getText()
+  const counts = Number(counts_text.split(' ')[0])
+  const pages = Math.ceil(counts / 60)
+  console.log(`===== ${counts} artworks in ${pages} pages =====`)
+
+  const lot_containers = await driver.findElements(By.className('lot-container'))   // all works - 60 items  [WebElement {}, WebElement {}, ...]
+  let result_data = await getPageData(lot_containers)  // add results from 1st page
+
+  for (let page = 2; page <= pages; page++) {     // add results from other pages
+    await driver.get(targetPage + `&p=${page}`)    
+    await driver.sleep(10000)
+    const lot_containers = await driver.findElements(By.className('lot-container'))
+
+    const dataPerPage = await getPageData(lot_containers)
+    result_data = result_data.concat(dataPerPage)
+  }
+  
+  // console.log(result_data)
+  console.log('Total results: ', result_data.length)
+  let averageVPA = (result_data.reduce((a,b) => a + b) / result_data.length).toFixed(2)
+  console.log('Average value per area', averageVPA)
+  
 }
 
+
+async function getPageData(lot_containers) {
+  const data = []
+  for (const lot_container of lot_containers) {
+    const lot_blocks = await lot_container.findElements(By.className('lot-datas-block'))
+    let price_raw
+    try {
+      price_raw = await lot_blocks[3].findElement(By.css('span')).getText()
+    } catch (error) {
+      price_raw = await lot_blocks[2].findElement(By.css('span')).getText()
+    }
+    const area_span = await lot_blocks[1].findElements(By.css('span'))
+    const area_raw = await area_span[1]?.getText() || null
+
+    // console.log('record:', 'price: ', price_raw, 'area: ', area_raw)
+    if (!price_raw.includes('Not') && area_raw != null) {
+      // calculate value per area
+      let price = Number(price_raw.slice(2).split(',').join(''))  // '$ 1,400' -> 1400
+      let area_arr = area_raw.split(' ')
+      let area = area_arr[0] * area_arr[2]   // cm^2
+      let vpa = Number((price / area).toFixed(2))
+      data.push(vpa)
+      console.log([price_raw, area_raw], [price, area, vpa])
+    }
+  }
+  return data
+}
 
 getArtPrice()
