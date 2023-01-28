@@ -7,7 +7,6 @@ const chrome = require('selenium-webdriver/chrome')
 const path = require('path')
 const fs = require('fs')
 const login_page = "https://www.artprice.com/identity"
-let targetPage
 const artPriceAC = process.env.ARTPRICE_AC
 const artPricePW = process.env.ARTPRICE_PW
 
@@ -16,17 +15,30 @@ const questions = [
   {
     type: 'input',
     name: 'target_artist',
-    message: "Your target artist_ID/artist_name. Default: '15079/wassily-kandinsky'",
+    message: "Your target artist_ID/artist_name. Format: '15079/wassily-kandinsky'",
     default: '15079/wassily-kandinsky',
     filter(val) {
       return val.toLowerCase();
+    },
+    validate(value) {
+      const pass = value.match(/^[0-9]+\/[a-z-]+$/)
+      if (pass) return true
+      return 'Please enter valid id and artist name'
     }
   },
   {
     type: 'input',
     name: 'date_from',
-    message: 'Auction start date. Default: "2022-01-01"',
-    default: '2022-01-01'
+    message: 'Auction start date. Format: "2022-01-01"',
+    default: '2022-01-01',
+    validate(value) {
+      const pass = value.match(/^\d{4}-\d{2}-\d{2}$/)
+      if (pass) {
+        let date_test = new Date(value)
+        if (date_test instanceof Date && !isNaN(date_test)) return true
+      }
+      return 'Please enter valid date'
+    }
   },
   {
     type: 'list',
@@ -37,6 +49,7 @@ const questions = [
   }
 ]
 
+let targetPage
 const prompt = inquirer.createPromptModule()
 prompt(questions)
   .then(answers => {  // answers: { target_artist:..., data_from:... }
