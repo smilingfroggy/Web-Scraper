@@ -5,7 +5,9 @@ const webdriver = require('selenium-webdriver')
 const chrome = require('selenium-webdriver/chrome')
 const path = require('path')
 const fs = require('fs')
-
+const login_page = "https://www.artprice.com/identity"
+const artPriceAC = process.env.ARTPRICE_AC
+const artPricePW = process.env.ARTPRICE_PW
 
 async function getDriver() {  // 檢查並設定瀏覽器driver
   let driver
@@ -43,6 +45,17 @@ async function getArtPrice() {
     console.error(error)
     return
   }
+
+  // login
+  await driver.get(login_page)
+  await driver.sleep(10000)
+  const account_input = await driver.wait(until.elementLocated(By.xpath(`//*[@id="login"]`)))
+  account_input.sendKeys(artPriceAC)
+  const password_input = await driver.wait(until.elementLocated(By.xpath(`//*[@id="pass"]`)))
+  password_input.sendKeys(artPricePW)
+  const login_submit = await driver.wait(until.elementLocated(By.xpath(`//*[@id="weblog_form"]/button`)))
+  login_submit.click()
+  await driver.sleep(12000)
 
   let targetPage = "https://www.artprice.com/artist/15079/wassily-kandinsky/lots/pasts?idcategory[]=2&ipp=60&dt_from=2022-01-01"
 
