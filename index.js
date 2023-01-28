@@ -1,4 +1,5 @@
 require('dotenv').config()
+const inquirer = require('inquirer')
 const webdriver = require('selenium-webdriver')
   By = webdriver.By
   until = webdriver.until
@@ -6,8 +7,45 @@ const chrome = require('selenium-webdriver/chrome')
 const path = require('path')
 const fs = require('fs')
 const login_page = "https://www.artprice.com/identity"
+let targetPage
 const artPriceAC = process.env.ARTPRICE_AC
 const artPricePW = process.env.ARTPRICE_PW
+
+console.log('Please enter target artist and conditions')
+const questions = [
+  {
+    type: 'input',
+    name: 'target_artist',
+    message: "Your target artist_ID/artist_name. Default: '15079/wassily-kandinsky'",
+    default: '15079/wassily-kandinsky',
+    filter(val) {
+      return val.toLowerCase();
+    }
+  },
+  {
+    type: 'input',
+    name: 'date_from',
+    message: 'Auction start date. Default: "2022-01-01"',
+    default: '2022-01-01'
+  },
+  {
+    type: 'list',
+    name: 'category',
+    message: 'Select target artwork category. Default: Painting',
+    choices: ['Painting', 'Print_Multiple', 'Drawing_Watercolor'],
+    default: 0
+  }
+]
+
+const prompt = inquirer.createPromptModule()
+prompt(questions)
+  .then(answers => {  // answers: { target_artist:..., data_from:... }
+    const categoryId = { Painting: '1', Print_Multiple: 2, Drawing_Watercolor: 7 }
+    targetPage = `https://www.artprice.com/artist/${answers.target_artist}/lots/pasts?ipp=60&dt_from=${answers.date_from}&idcategory[]=${categoryId[answers.category]}`
+    console.log(`Target Page: ${targetPage}`)
+
+    getArtPrice()
+  })
 
 async function getDriver() {  // 檢查並設定瀏覽器driver
   let driver
@@ -56,8 +94,6 @@ async function getArtPrice() {
   const login_submit = await driver.wait(until.elementLocated(By.xpath(`//*[@id="weblog_form"]/button`)))
   login_submit.click()
   await driver.sleep(12000)
-
-  let targetPage = "https://www.artprice.com/artist/15079/wassily-kandinsky/lots/pasts?idcategory[]=2&ipp=60&dt_from=2022-01-01"
 
   await driver.get(targetPage)
   await driver.sleep(12000)
@@ -140,4 +176,3 @@ async function getPageData(lot_containers) {
   return data
 }
 
-getArtPrice()
