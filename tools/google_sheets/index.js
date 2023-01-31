@@ -72,10 +72,9 @@ async function authorize() {
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 
-async function addSheet(auth) {
+async function addSheet(artistName, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
-  const artistName = 'wassily-kandinsky'
-  const title = artistName + '-' + (new Date()).toJSON().slice(0,10)
+  const title = artistName + '-' + (new Date()).toJSON().slice(0,10) + '-' + Date.now()
   const request = {
     spreadsheetId: process.env.SPREADSHEET_ID,
     resource: {
@@ -83,7 +82,10 @@ async function addSheet(auth) {
         {
           addSheet: {
             properties: {
-              title: title
+              title: title,
+              gridProperties: {
+                frozenRowCount: 1
+              }
             }
           }
         }
@@ -92,10 +94,29 @@ async function addSheet(auth) {
   }
 
   try {
-    // let value = (await sheets.spreadsheets.values.get(request)).data.values
-    // console.log(value)
-    const response = (await sheets.spreadsheets.batchUpdate(request))
-    console.log(JSON.stringify(response, null, 2))
+    const response = (await sheets.spreadsheets.batchUpdate(request)).data
+    const sheetId = response.replies[0].addSheet.properties.sheetId
+    console.log('Added sheet: ', title, ' | id:', sheetId)
+    return { sheetId, title }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+async function writeSheet(title, result_data, auth) {
+  const sheets = google.sheets({ version: 'v4', auth })
+  const request = {
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    valueInputOption: 'USER_ENTERED',
+    range: `${title}!A:ZZ`,
+    resource: {
+      values: result_data
+    }
+  }
+
+  try {
+    await sheets.spreadsheets.values.update(request)
+    console.log(`Sheet '${title}' Updated`)
   } catch (error) {
     console.error(error)
   }
@@ -119,4 +140,11 @@ async function listMajors(auth) {
   });
 }
 
-authorize().then(addSheet).catch(console.error);
+async function updateGoogleSheets(artistName = 'wassily-kandinsky', result_data) {
+  let auth = await authorize()
+  let { sheetId, title } = await addSheet(artistName, auth)
+  console.log('sheetId, title', sheetId, title)
+  await writeSheet(title, result_data, auth)
+}
+
+module.exports = updateGoogleSheets

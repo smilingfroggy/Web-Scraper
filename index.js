@@ -2,14 +2,18 @@ require('dotenv').config()
 const getTargetPage = require('./tools/inquirer')
 const initDriver = require('./tools/initDriver')
 const getArtPrice = require('./tools/getArtPrice')
+const updateGoogleSheets = require('./tools/google_sheets/index')
 
 async function crawler () {
   const targetPage = await getTargetPage()
   const driver = await initDriver()
   if (!driver) return
 
-  await getArtPrice(driver, targetPage)
+  const result_data = await getArtPrice(driver, targetPage)
   driver.quit()
+
+  console.log('result_data: ', result_data)
+  await updateGoogleSheets('wassily-kandinsky', [result_data])  // artistName(title), result_data(nest array)
 
 }
 
