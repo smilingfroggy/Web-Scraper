@@ -1,3 +1,4 @@
+require('dotenv').config()
 const fs = require('fs').promises;
 const path = require('path');
 const process = require('process');
@@ -5,7 +6,7 @@ const { authenticate } = require('@google-cloud/local-auth');
 const { google } = require('googleapis');
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
+const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];  //  .readonly
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
@@ -70,6 +71,36 @@ async function authorize() {
  * @see https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
+
+async function addSheet(auth) {
+  const sheets = google.sheets({ version: 'v4', auth })
+  const artistName = 'wassily-kandinsky'
+  const title = artistName + '-' + (new Date()).toJSON().slice(0,10)
+  const request = {
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    resource: {
+      requests: [
+        {
+          addSheet: {
+            properties: {
+              title: title
+            }
+          }
+        }
+      ]
+    }
+  }
+
+  try {
+    // let value = (await sheets.spreadsheets.values.get(request)).data.values
+    // console.log(value)
+    const response = (await sheets.spreadsheets.batchUpdate(request))
+    console.log(JSON.stringify(response, null, 2))
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 async function listMajors(auth) {
   const sheets = google.sheets({ version: 'v4', auth });
   const res = await sheets.spreadsheets.values.get({
@@ -88,4 +119,4 @@ async function listMajors(auth) {
   });
 }
 
-authorize().then(listMajors).catch(console.error);
+authorize().then(addSheet).catch(console.error);
