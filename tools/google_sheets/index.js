@@ -68,7 +68,7 @@ async function authorize() {
 
 /**
  * Prints the works and price in a sample spreadsheet:
- * @see https://docs.google.com/spreadsheets/d/1agynQTIUtmDMtY4N4rb07ii6YQLvp_1u7KhrmHXEC9E/edit
+ * @see https://docs.google.com/spreadsheets/d/1agynQTIUtmDMtY4N4rb07ii6YQLvp_1u7KhrmHXEC9E
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 
@@ -111,9 +111,9 @@ async function writeSheet(title, artistName, date_from, category, result_data, a
     range: `${title}!A:ZZ`,
     resource: {
       values: [
-        [`Auction results of ${artistName} started from ${date_from}, in ${category} (${result_data.length} results)`],
-        ['Artist', ''],   // title of table
-        result_data
+        [`Auction results of ${artistName} from ${date_from} to ${new Date().toISOString().slice(0, 10)}, in ${category} (${result_data.works_data.length} results). Average value per area: ${result_data.averageVPA}`],
+        ['Work Title', 'Medium', 'Size', 'Auction Date', 'Auction House', 'Hammer Price (USD)', 'Value per area'],   // title of table
+        ...result_data.works_data
       ]
     }
   }
@@ -121,27 +121,10 @@ async function writeSheet(title, artistName, date_from, category, result_data, a
   try {
     await sheets.spreadsheets.values.update(request)
     console.log(`Sheet '${title}' Updated`)
+    console.log(`See https://docs.google.com/spreadsheets/d/${process.env.SPREADSHEET_ID}`)
   } catch (error) {
     console.error(error)
   }
-}
-
-async function listMajors(auth) {
-  const sheets = google.sheets({ version: 'v4', auth });
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-    range: 'Class Data!A2:E',
-  });
-  const rows = res.data.values;
-  if (!rows || rows.length === 0) {
-    console.log('No data found.');
-    return;
-  }
-  console.log('Name, Major:');
-  rows.forEach((row) => {
-    // Print columns A and E, which correspond to indices 0 and 4.
-    console.log(`${row[0]}, ${row[4]}`);
-  });
 }
 
 async function updateGoogleSheets(artistName, date_from, category, result_data) {

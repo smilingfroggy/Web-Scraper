@@ -19,7 +19,7 @@ module.exports = async function getArtPrice(driver, targetPage) {
   console.log(`===== ${counts} artworks in ${pages} pages =====`)
 
   const lot_containers = await driver.findElements(By.className('lot-container'))   // all works - 60 items  [WebElement {}, WebElement {}, ...]
-  let result_data = await getPageData(lot_containers)  // add results from 1st page
+  let works_data = await getPageData(lot_containers)  // add results from 1st page [[title, medium, size,...], [title, medium, size,...], ...]
 
   for (let page = 2; page <= pages; page++) {     // add results from other pages
     await driver.get(targetPage + `&p=${page}`)
@@ -27,13 +27,13 @@ module.exports = async function getArtPrice(driver, targetPage) {
     const lot_containers = await driver.findElements(By.className('lot-container'))
 
     const dataPerPage = await getPageData(lot_containers)
-    result_data = result_data.concat(dataPerPage)
+    works_data = works_data.concat(dataPerPage)
   }
 
-  console.log('Total valid results: ', result_data.length)
-  let averageVPA = (result_data.reduce((a, b) => a + b) / result_data.length).toFixed(2)
+  let averageVPA = (works_data.reduce((a, b) => a + b[6], works_data[0][6]) / works_data.length).toFixed(2)
+  console.log('Total valid results: ', works_data.length)
   console.log('Average value per area', averageVPA)
-  return result_data
+  return { works_data, averageVPA }
 
 }
 
@@ -81,24 +81,33 @@ async function getPageData(lot_containers) {
   const data = []
   for (const lot_container of lot_containers) {
     const lot_blocks = await lot_container.findElements(By.className('lot-datas-block'))
-    let price_raw
-    try {
-      price_raw = await lot_blocks[3].findElement(By.css('span')).getText()
-    } catch (error) {
-      price_raw = await lot_blocks[2].findElement(By.css('span')).getText()
-    }
+    const work_title = await lot_container.findElement(By.className('lot-datas-title-container')).getText()
+    const medium = await lot_blocks[0].getText()
     const area_span = await lot_blocks[1].findElements(By.css('span'))
     const area_raw = await area_span[1]?.getText() || null
 
+    let price_raw, auction_date, auction_house
+    try {   // some results don't include estimate price and cause error
+      price_raw = await lot_blocks[3].findElement(By.css('span')).getText()
+      auction_date = await lot_blocks[4].getText()
+      auction_house = await lot_blocks[5].getText()
+    } catch (error) {
+      price_raw = await lot_blocks[2].findElement(By.css('span')).getText()
+      auction_date = await lot_blocks[3].getText()
+      auction_house = await lot_blocks[4].getText()
+    }
+
+    // console.log('work_title:', work_title, 'medium:', medium)
+    // console.log(`auction: ${auction_house} ${auction_date}`)
     // console.log('record:', 'price: ', price_raw, 'area: ', area_raw)
+
     if (!price_raw.includes('Not') && area_raw != null) {
       // calculate value per area
       let price = Number(price_raw.slice(2).split(',').join(''))  // '$ 1,400' -> 1400
       let area_arr = area_raw.split(' ')
       let area = area_arr[0] * area_arr[2]   // cm^2
       let vpa = Number((price / area).toFixed(2))
-      data.push(vpa)
-      console.log([price_raw, area_raw], [price, area, vpa])
+      data.push([work_title, medium, area_raw, auction_date, auction_house, price_raw, vpa])
     }
   }
   return data
