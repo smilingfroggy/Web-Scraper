@@ -30,7 +30,7 @@ module.exports = async function getArtPrice(driver, targetPage) {
     works_data = works_data.concat(dataPerPage)
   }
 
-  let averageVPA = (works_data.reduce((a, b) => a + b[6], works_data[0][6]) / works_data.length).toFixed(2)
+  let averageVPA = (works_data.reduce((a, b) => a + b[6], 0) / works_data.length).toFixed(2)
   console.log('Total valid results: ', works_data.length)
   console.log('Average value per area', averageVPA)
   return { works_data, averageVPA }
@@ -85,6 +85,7 @@ async function getPageData(lot_containers) {
     const medium = await lot_blocks[0].getText()
     const area_span = await lot_blocks[1].findElements(By.css('span'))
     const area_raw = await area_span[1]?.getText() || null
+    const link = await lot_container.findElement(By.css('a.sln_lot_show')).getAttribute('href')
 
     let price_raw, auction_date, auction_house
     try {   // some results don't include estimate price and cause error
@@ -107,7 +108,7 @@ async function getPageData(lot_containers) {
       let area_arr = area_raw.split(' ')
       let area = area_arr[0] * area_arr[2]   // cm^2
       let vpa = Number((price / area).toFixed(2))
-      data.push([work_title, medium, area_raw, auction_date, auction_house, price_raw, vpa])
+      data.push([work_title, medium, area_raw, auction_date, auction_house, price_raw, vpa, link])
     }
   }
   return data

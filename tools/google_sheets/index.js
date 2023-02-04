@@ -74,7 +74,7 @@ async function authorize() {
 
 async function addSheet(artistName, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
-  const title = artistName + '-' + (new Date()).toJSON().slice(0,10) + '-' + Date.now()
+  const title = artistName + '-' + (new Date()).toJSON().slice(0, 10) + '-' + Date.now()
   const request = {
     spreadsheetId: process.env.SPREADSHEET_ID,
     resource: {
@@ -103,6 +103,57 @@ async function addSheet(artistName, auth) {
   }
 }
 
+async function formatHeader(sheetId, auth) {
+  const sheets = google.sheets({ version: 'v4', auth })
+  const request = {
+    spreadsheetId: process.env.SPREADSHEET_ID,
+    resource: {
+      requests: [
+        {
+          repeatCell: {
+            range: {
+              sheetId: sheetId,
+              startRowIndex: 0,
+              endRowIndex: 1
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  fontSize: 14,
+                  bold: true
+                }
+              }
+            },
+            fields: "userEnteredFormat.textFormat"
+          },
+        },
+        {
+          repeatCell: {
+            range: {
+              sheetId: sheetId,
+              startRowIndex: 1,
+              endRowIndex: 2
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  bold: true
+                }
+              }
+            },
+            fields: "userEnteredFormat.textFormat"
+          },
+        }
+      ]
+    }
+  }
+  try {
+    await sheets.spreadsheets.batchUpdate(request)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 async function writeSheet(title, artistName, date_from, category, result_data, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
   const request = {
@@ -111,9 +162,11 @@ async function writeSheet(title, artistName, date_from, category, result_data, a
     range: `${title}!A:ZZ`,
     resource: {
       values: [
-        [`Auction results of ${artistName} from ${date_from} to ${new Date().toISOString().slice(0, 10)}, in ${category} (${result_data.works_data.length} results). Average value per area: ${result_data.averageVPA}`],
+        [`Auction results of ${artistName} from ${date_from} to ${new Date().toISOString().slice(0, 10)}, in ${category} (${result_data.works_data.length} records)`],
         ['Work Title', 'Medium', 'Size', 'Auction Date', 'Auction House', 'Hammer Price (USD)', 'Value per area'],   // title of table
-        ...result_data.works_data
+        ...result_data.works_data,
+        [],
+        ['', '', '', '', '', 'Average value per area', `=AVERAGE(G3:G${result_data.works_data.length + 2})`]
       ]
     }
   }
@@ -131,6 +184,7 @@ async function updateGoogleSheets(artistName, date_from, category, result_data) 
   let auth = await authorize()
   let { sheetId, title } = await addSheet(artistName, auth)
   console.log('sheetId, title', sheetId, title)
+  await formatHeader(sheetId, auth)
   await writeSheet(title, artistName, date_from, category, result_data, auth)
 }
 
