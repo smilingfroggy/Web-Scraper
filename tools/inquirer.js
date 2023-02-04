@@ -45,7 +45,7 @@ module.exports = async () => {
   const answers = await prompt(questions)
   const categoryId = { Painting: 1, Print_Multiple: 2, Drawing_Watercolor: 7 }  // category Id of artprice.com
   const targetPage = `https://www.artprice.com/artist/${answers.target_artist}/lots/pasts?ipp=60&dt_from=${answers.date_from}&idcategory[]=${categoryId[answers.category]}`
+  answers.categoryId = categoryId[answers.category]
   console.log(`Target Page: ${targetPage}`)
-  return targetPage
-
+  return { targetPage, targetInfo: answers }
 }

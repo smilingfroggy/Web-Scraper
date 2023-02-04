@@ -67,8 +67,8 @@ async function authorize() {
 }
 
 /**
- * Prints the names and majors of students in a sample spreadsheet:
- * @see https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+ * Prints the works and price in a sample spreadsheet:
+ * @see https://docs.google.com/spreadsheets/d/1agynQTIUtmDMtY4N4rb07ii6YQLvp_1u7KhrmHXEC9E/edit
  * @param {google.auth.OAuth2} auth The authenticated Google OAuth client.
  */
 
@@ -84,7 +84,7 @@ async function addSheet(artistName, auth) {
             properties: {
               title: title,
               gridProperties: {
-                frozenRowCount: 1
+                frozenRowCount: 2
               }
             }
           }
@@ -103,14 +103,18 @@ async function addSheet(artistName, auth) {
   }
 }
 
-async function writeSheet(title, result_data, auth) {
+async function writeSheet(title, artistName, date_from, category, result_data, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
   const request = {
     spreadsheetId: process.env.SPREADSHEET_ID,
     valueInputOption: 'USER_ENTERED',
     range: `${title}!A:ZZ`,
     resource: {
-      values: result_data
+      values: [
+        [`Auction results of ${artistName} started from ${date_from}, in ${category} (${result_data.length} results)`],
+        ['Artist', ''],   // title of table
+        result_data
+      ]
     }
   }
 
@@ -140,11 +144,11 @@ async function listMajors(auth) {
   });
 }
 
-async function updateGoogleSheets(artistName = 'wassily-kandinsky', result_data) {
+async function updateGoogleSheets(artistName, date_from, category, result_data) {
   let auth = await authorize()
   let { sheetId, title } = await addSheet(artistName, auth)
   console.log('sheetId, title', sheetId, title)
-  await writeSheet(title, result_data, auth)
+  await writeSheet(title, artistName, date_from, category, result_data, auth)
 }
 
 module.exports = updateGoogleSheets
