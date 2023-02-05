@@ -103,7 +103,7 @@ async function addSheet(artistName, auth) {
   }
 }
 
-async function formatHeader(sheetId, auth) {
+async function format(sheetId, works_data, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
   const request = {
     spreadsheetId: process.env.SPREADSHEET_ID,
@@ -143,6 +143,23 @@ async function formatHeader(sheetId, auth) {
             },
             fields: "userEnteredFormat.textFormat"
           },
+        },
+        {
+          repeatCell: {
+            range: {
+              sheetId: sheetId,
+              startRowIndex: works_data.length + 3,
+              endRowIndex: works_data.length + 4,
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  bold: true
+                }
+              }
+            },
+            fields: "userEnteredFormat.textFormat"
+          }
         }
       ]
     }
@@ -184,8 +201,8 @@ async function updateGoogleSheets(artistName, date_from, category, result_data) 
   let auth = await authorize()
   let { sheetId, title } = await addSheet(artistName, auth)
   console.log('sheetId, title', sheetId, title)
-  await formatHeader(sheetId, auth)
   await writeSheet(title, artistName, date_from, category, result_data, auth)
+  await format(sheetId, result_data.works_data, auth)
 }
 
 module.exports = updateGoogleSheets

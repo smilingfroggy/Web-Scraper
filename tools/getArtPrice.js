@@ -10,14 +10,24 @@ module.exports = async function getArtPrice(driver, targetPage) {
   await driver.get(targetPage)
   await driver.sleep(12000)
 
-  await selectUSD(driver)
+  // select currency-USD & get pages
+  let pages
+  try {
+    await selectUSD(driver)
 
-  // get number of results
-  const counts_text = await driver.wait(until.elementLocated(By.className('searchbar-count'))).getText()
-  const counts = Number(counts_text.split(' ')[0])
-  const pages = Math.ceil(counts / 60)
-  console.log(`===== ${counts} artworks in ${pages} pages =====`)
+    // get number of results
+    const counts_text = await driver.wait(until.elementLocated(By.className('searchbar-count')), 10000).getText()
+    const counts = Number(counts_text.split(' ')[0])
+    pages = Math.ceil(counts / 60)
+    console.log(`===== ${counts} artworks in ${pages} pages =====`)
+  } catch (error) {   // e.g. No match found for your search.
+    const message = await driver.findElement(By.css('h2.text-center')).getText()
+    console.log(error.name, error.message)
+    console.log('Result:', message)
+    process.exit()
+  }
 
+  // get artwork data
   const lot_containers = await driver.findElements(By.className('lot-container'))   // all works - 60 items  [WebElement {}, WebElement {}, ...]
   let works_data = await getPageData(lot_containers)  // add results from 1st page [[title, medium, size,...], [title, medium, size,...], ...]
 
@@ -97,10 +107,6 @@ async function getPageData(lot_containers) {
       auction_date = await lot_blocks[3].getText()
       auction_house = await lot_blocks[4].getText()
     }
-
-    // console.log('work_title:', work_title, 'medium:', medium)
-    // console.log(`auction: ${auction_house} ${auction_date}`)
-    // console.log('record:', 'price: ', price_raw, 'area: ', area_raw)
 
     if (!price_raw.includes('Not') && area_raw != null) {
       // calculate value per area
