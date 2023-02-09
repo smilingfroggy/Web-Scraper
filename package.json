@@ -1,7 +1,7 @@
 {
-  "name": "crawler_practice",
+  "name": "web_scraping_practice",
   "version": "1.0.0",
-  "description": "",
+  "description": "A practice of web scrapping with Selenium-webdriver, and saving results to google sheets.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
