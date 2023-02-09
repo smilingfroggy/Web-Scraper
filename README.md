@@ -32,6 +32,8 @@ Enter your target artist, its personal code, start date of auction, and category
     __4-2. Google Sheet ID__:
     
     Create your google sheets to store results. Get your google sheet ID from address bar
+    ![address_bar_sample](https://user-images.githubusercontent.com/86075334/217842395-048607e5-1e47-43b7-b8ed-823cdd54cedb.jpg)
+
 
 5. __Create projects and access credentials__
 
@@ -63,6 +65,9 @@ Enter your target artist, its personal code, start date of auction, and category
     B. Starting date of auction
 
     C. Select category
+    
+    ![interface_example](https://user-images.githubusercontent.com/86075334/217851994-6c9273b1-e94a-4076-acee-dddc428879b2.jpg)
+
 
 3.  __Authorize__
 
