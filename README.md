@@ -1,6 +1,6 @@
 ## Introduction
 
-A practice of web scrapping with Selenium-webdriver, and saving results to google sheets.
+A practice of web scraping with Selenium-webdriver, and saving results to google sheets.
 
 The market value of art is affected by many aspects, including artist, size, medium, style, subject, etc. 
 This project is to simplify the collection of auction price data, accelerate research for personal use, and hopefully give an insight into art market.
@@ -13,7 +13,7 @@ Enter your target artist, its personal code, start date of auction, and category
 
 1. __Clone it__
 
-    ```$ git clone https://github.com/smilingfroggy/crawler_practice.git```
+    ```$ git clone https://github.com/smilingfroggy/Web-Scraper.git```
 
 2. __Install packages__
 

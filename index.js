@@ -4,7 +4,7 @@ const initDriver = require('./tools/initDriver')
 const getArtPrice = require('./tools/getArtPrice')
 const updateGoogleSheets = require('./tools/google_sheets/index')
 
-async function crawler () {
+async function scraper () {
   const { targetPage, targetInfo } = await getTargetPage()
   const driver = await initDriver()
   if (!driver) return
@@ -17,4 +17,4 @@ async function crawler () {
 
 }
 
-crawler()
+scraper()
