@@ -13,7 +13,7 @@ async function scraper () {
   driver.quit()
 
   console.log('result_data: ', result_data)
-  await updateGoogleSheets(targetInfo.target_artist, targetInfo.date_from, targetInfo.category , result_data)  // result_data(nest array)
+  await updateGoogleSheets(targetPage, targetInfo.target_artist, targetInfo.date_from, targetInfo.category , result_data)  // result_data(nest array)
 
 }
 

@@ -29,7 +29,7 @@ async function loadSavedCredentialsIfExist() {
 }
 
 /**
- * Serializes credentials to a file comptible with GoogleAUth.fromJSON.
+ * Serializes credentials to a file compatible with GoogleAUth.fromJSON.
  *
  * @param {OAuth2Client} client
  * @return {Promise<void>}
@@ -103,7 +103,7 @@ async function addSheet(artistName, auth) {
   }
 }
 
-async function format(sheetId, works_data, auth) {
+async function format(sheetId, targetPage, works_data, auth) {
   const sheets = google.sheets({ version: 'v4', auth })
   const request = {
     spreadsheetId: process.env.SPREADSHEET_ID,
@@ -111,7 +111,7 @@ async function format(sheetId, works_data, auth) {
       requests: [
         {
           repeatCell: {
-            range: {
+            range: {  // row 1
               sheetId: sheetId,
               startRowIndex: 0,
               endRowIndex: 1
@@ -129,7 +129,7 @@ async function format(sheetId, works_data, auth) {
         },
         {
           repeatCell: {
-            range: {
+            range: {  // row 2
               sheetId: sheetId,
               startRowIndex: 1,
               endRowIndex: 2
@@ -146,7 +146,27 @@ async function format(sheetId, works_data, auth) {
         },
         {
           repeatCell: {
-            range: {
+            range: {  // row 2 col 7 : add source link
+              sheetId: sheetId,
+              startRowIndex: 1,
+              endRowIndex: 2,
+              startColumnIndex: 7,
+              endColumnIndex: 8
+            },
+            cell: {
+              userEnteredFormat: {
+                textFormat: {
+                  bold: true,
+                  link: { uri: targetPage }
+                }
+              }
+            },
+            fields: "userEnteredFormat.textFormat"
+          },
+        },
+        {
+          repeatCell: {
+            range: {  // row of average
               sheetId: sheetId,
               startRowIndex: works_data.length + 3,
               endRowIndex: works_data.length + 4,
@@ -180,7 +200,7 @@ async function writeSheet(title, artistName, date_from, category, result_data, a
     resource: {
       values: [
         [`Auction results of ${artistName} from ${date_from} to ${new Date().toISOString().slice(0, 10)}, in ${category} (${result_data.works_data.length} records)`],
-        ['Work Title', 'Medium', 'Size', 'Auction Date', 'Auction House', 'Hammer Price (USD)', 'Value per area'],   // title of table
+        ['Work Title', 'Medium', 'Size', 'Auction Date', 'Auction House', 'Hammer Price (USD)', 'Value per area', 'Source Link'],   // title of table
         ...result_data.works_data,
         [],
         ['', '', '', '', '', 'Average value per area', `=AVERAGE(G3:G${result_data.works_data.length + 2})`]
@@ -197,12 +217,12 @@ async function writeSheet(title, artistName, date_from, category, result_data, a
   }
 }
 
-async function updateGoogleSheets(artistName, date_from, category, result_data) {
+async function updateGoogleSheets(targetPage, artistName, date_from, category, result_data) {
   let auth = await authorize()
   let { sheetId, title } = await addSheet(artistName, auth)
   console.log('sheetId, title', sheetId, title)
   await writeSheet(title, artistName, date_from, category, result_data, auth)
-  await format(sheetId, result_data.works_data, auth)
+  await format(sheetId, targetPage, result_data.works_data, auth)
 }
 
 module.exports = updateGoogleSheets
